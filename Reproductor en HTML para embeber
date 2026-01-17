@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+  <!-- PLYR -->
+  <link href="https://cdn.plyr.io/3.7.2/plyr.css" rel="stylesheet">
+  <script src="https://cdn.plyr.io/3.7.2/plyr.js"></script>
+
+  <!-- SHAKA -->
+  <script src="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/shaka-player.compiled.js"></script>
+
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background-color: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    video {
+      width: 100%;
+      height: auto;
+      outline: none;
+      aspect-ratio: 16 / 9;
+      object-fit: fill;
+    }
+    #qualitySelector {
+      display: none;
+    }
+    #errorMessage {
+      color: red;
+      font-size: 14px;
+      margin-top: 12px;
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <video autoplay controls id="player" playsinline></video>
+  <select id="qualitySelector"></select>
+  <div id="errorMessage"></div>
+
+  <script>
+    const video = document.getElementById("player");
+    const selector = document.getElementById("qualitySelector");
+    const errorMessage = document.getElementById("errorMessage");
+
+    const mpdUrl = "https://cdn-live.mundogo.cl/canal13/canal13.mpd";
+
+    /* 🔐 CLEARKEY MULTIKEY */
+    const clearKeys = {
+      "573759b8886f5da992a3cccebdaeb21d":
+      "37208a97c7f01edf523ed7575d5ba9f4",
+
+      "5affd912a70850469baee6ed21035d1c":
+      "d6812382c31b1feebc524c75ca2c99ed",
+
+      "fb0179667bd652beba3c4b6bc948d847":
+      "0c23059f2572348bdcf8a4174dcb6ba8"
+    };
+
+    shaka.polyfill.installAll();
+
+    if (shaka.Player.isBrowserSupported()) {
+
+      const shakaPlayer = new shaka.Player(video);
+
+      shakaPlayer.addEventListener("error", event => {
+        console.error("Shaka error:", event.detail);
+        errorMessage.textContent = "Error al cargar el video.";
+        errorMessage.style.display = "block";
+      });
+
+      shakaPlayer.configure({
+        drm: { clearKeys: clearKeys },
+        abr: { enabled: false },
+        preferredAudioLanguage: "es",
+        preferredTextLanguage: "es"
+      });
+
+      shakaPlayer.load(mpdUrl).then(() => {
+
+        /* 🎛️ PLYR (NO SE TOCA) */
+        new Plyr(video);
+
+        const tracks = shakaPlayer.getVariantTracks();
+        if (tracks.length > 0) {
+          const bestTrack = tracks.reduce((a, b) =>
+            a.bandwidth > b.bandwidth ? a : b
+          );
+          shakaPlayer.selectVariantTrack(bestTrack, true);
+        }
+
+      }).catch(error => {
+        console.error("Error al cargar el MPD:", error);
+        errorMessage.textContent = "No se pudo cargar el contenido.";
+        errorMessage.style.display = "block";
+      });
+
+    } else {
+      console.error("Shaka Player no soportado.");
+      errorMessage.textContent = "Este navegador no soporta Shaka Player.";
+      errorMessage.style.display = "block";
+    }
+  </script>
+
+</body>
+</html>
