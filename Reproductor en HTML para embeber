@@ -52,7 +52,7 @@
     const selector = document.getElementById("qualitySelector");
     const errorMessage = document.getElementById("errorMessage");
 
-    const mpdUrl = "https://cdn-live.mundogo.cl/canal13/canal13.mpd";
+    const mpdUrl = "https://cors-proxy.wangzhishi.net/https://cdn-live.mundogo.cl/canal13/canal13.mpd";
 
     /* 🔐 CLEARKEY MULTIKEY */
     const clearKeys = {
